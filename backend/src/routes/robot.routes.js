@@ -299,6 +299,13 @@ router.post('/interviews', (req, res) => {
     const app = db.prepare('SELECT name, email, phone, job_id FROM applications WHERE id = ?').get(application_id);
     const job = db.prepare('SELECT title, interview_location, documents_required, contact_person FROM jobs WHERE id = ?').get(app.job_id);
     const slotInfo = db.prepare('SELECT start_time FROM slots WHERE id = ?').get(slot_id);
+    const slotDateObj = new Date(slotInfo.start_time);
+    const dateFormatted = !isNaN(slotDateObj.getTime())
+      ? slotDateObj.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', year: 'numeric', month: 'long', day: 'numeric' })
+      : (slotInfo.start_time.split('T')[0] || slotInfo.start_time.split(' ')[0]);
+    const timeFormatted = !isNaN(slotDateObj.getTime())
+      ? slotDateObj.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })
+      : (slotInfo.start_time.split('T')[1]?.substring(0, 5) || '10:00');
 
     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const idempotencyKey = `INVITATION_${application_id}_v1`;
@@ -308,8 +315,8 @@ router.post('/interviews', (req, res) => {
       to_name: app.name,
       position: job.title,
       company: 'PT RecruitFlow Inovasi',
-      date: slotInfo.start_time.split('T')[0] || slotInfo.start_time.split(' ')[0],
-      time: slotInfo.start_time.split('T')[1]?.substring(0, 5) || '10:00',
+      date: dateFormatted,
+      time: timeFormatted,
       location: job.interview_location,
       documents: job.documents_required,
       contact: job.contact_person,
