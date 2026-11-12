@@ -4,77 +4,71 @@
 
 Platform ini merupakan pusat kendali operasional HR (*Human in the Lead*) sekaligus peladen REST API terpadu yang melayani antarmuka publik (`RecruitFlow-Portal`) dan pemrosesan otomatis robot latar belakang (`RecruitFlow-RPA`).
 
+Repositori ini terstruktur ke dalam dua direktori independen:
+- **`backend/`** : Peladen REST API murni (Node.js/Express, SQLite/PostgreSQL, endpoint Robot, Public, dan HR).
+- **`frontend/`**: Dasbor Web Kontrol Aksi HR (React/Vite/Tailwind).
+
 ---
 
 ## 🛠️ Persyaratan Sistem & Dependensi
 
-1. **Runtime Peladen**: Node.js v18+ (atau runtime LTS yang didukung).
-2. **Basis Data**: Relational Database (PostgreSQL / MySQL / SQLite untuk dev).
-3. **Penyimpanan Berkas**: Direktori lokal terisolasi (`uploads/`) atau S3-compatible storage.
+1. **Runtime Peladen**: Node.js v18+ (Node.js v24 direkomendasikan dengan dukungan native `node:sqlite`).
+2. **Basis Data**: Relational Database (SQLite native untuk dev cepat, PostgreSQL untuk produksi).
+3. **Penyimpanan Berkas**: Direktori lokal terisolasi (`backend/uploads/`).
 
 ---
 
-## 🚀 Panduan Memulai Cepat (Quick Start)
+## 🚀 Panduan Memulai Cepat (Quick Start Backend)
 
-### 1. Kloning & Instalasi Paket
+### 1. Masuk ke Direktori Backend & Instalasi Dependensi
 ```bash
-git clone https://github.com/iammadsfq/RecruitFlow-Platform.git
-cd RecruitFlow-Platform
+cd RecruitFlow-Platform/backend
 npm install
 ```
 
-### 2. Konfigurasi Lingkungan (`.env`)
-Salin file konfigurasi contoh dan sesuaikan variabel rahasia:
+### 2. Konfigurasi Lingkungan (`backend/.env`)
+Salin file konfigurasi contoh:
 ```bash
 cp .env.example .env
 ```
 
-Contoh konfigurasi penting dalam `.env`:
-```env
-PORT=5000
-NODE_ENV=development
+Nilai bawaan aman untuk pengembangan lokal:
+- `PORT=5000`
+- `ROBOT_API_TOKEN=rf_robot_bearer_token_dev_secret_key_123456`
+- `CONFIRMATION_WINDOW_HOURS=24`
+- `OVERBOOKING_PERCENTAGE=20`
 
-# Basis Data
-DATABASE_URL="postgresql://user:password@localhost:5432/recruitflow_db?schema=public"
-
-# Rahasia Otentikasi
-JWT_SECRET="ganti_dengan_kunci_acak_minimal_32_karakter"
-ROBOT_API_TOKEN="token_khusus_robot_uipath_bearer_autentikasi"
-
-# Batas Waktu & Jendela Konfirmasi
-CONFIRMATION_WINDOW_HOURS=24
-OVERBOOKING_PERCENTAGE=20
-
-# Direktori Penyimpanan Berkas CV
-UPLOAD_DIR="./uploads"
+### 3. Inisialisasi & Seeder Data Awal
+Eksekusi seeder untuk membuat tabel relasional, akun HR default, lowongan acuan lomba (*Junior Software Engineer*), kriteria knock-out, slot kalender wawancara, serta 50 pelamar awal (tersambung dengan dataset PDF CV):
+```bash
+npm run seed
 ```
 
-### 3. Migrasi & Seeder Basis Data
-Jalankan migrasi skema tabel dan inisialisasi akun administrator default serta data lowongan contoh:
+### 4. Menjalankan Peladen API
 ```bash
-npm run db:migrate
-npm run db:seed
-```
-
-### 4. Menjalankan Peladen
-```bash
-# Mode pengembangan (dengan live-reload)
+# Mode pengembangan (live reload)
 npm run dev
 
 # Mode produksi
-npm run build
 npm start
 ```
-Akses Dashboard HR pada peramban: `http://localhost:5000` (atau port yang ditentukan).
+
+Peladen API aktif di:
+- **Healthcheck**: `http://localhost:5000/`
+- **Robot Endpoints**: `http://localhost:5000/robot/heartbeat` (Header: `Authorization: Bearer rf_robot_bearer_token_dev_secret_key_123456`)
+- **Public Endpoints**: `http://localhost:5000/public/jobs`
+- **HR Cockpit Endpoints**: `http://localhost:5000/hr/dashboard` (Header: `X-Dev-User: usr_admin_01`)
 
 ---
 
 ## 🔒 Integritas Bisnis & Keamanan Lomba
 
 1. **Pencegahan Kebocoran Kredensial**:
-   File `.gitignore` telah dikonfigurasi untuk mencegah file `.env`, berkas basis data lokal, dan dokumen CV pelamar terunggah ke repositori GitHub.
+   File `.gitignore` telah dikonfigurasi untuk mencegah file `.env`, basis data lokal `*.sqlite`, dan berkas unggahan CV terunggah ke repositori Git.
 2. **Penegakan Aturan Mutlak BR-01**:
    Robot UiPath tidak akan pernah menerima daftar antrean pengiriman email untuk kandidat yang belum mengantongi status persetujuan eksplisit dari HR (`DISETUJUI_UNDANG` atau `DISETUJUI_TOLAK`).
+3. **Pencegahan Jadwal Bentrok (BR-05 & Concurrency 409)**:
+   Alokasi slot kalender dibungkus dalam transaksi database atomik. Jika terjadi tabrakan pemesanan slot yang sama, peladen mengembalikan status HTTP `409 Conflict`, memicu robot UiPath untuk mengambil slot alternatif berikutnya.
 
 ---
 

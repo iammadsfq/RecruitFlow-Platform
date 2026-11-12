@@ -30,6 +30,8 @@ out/
 # Candidate uploads and runtime storage
 uploads/*
 !uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
 storage/logs/*
 storage/app/*
 storage/framework/*
