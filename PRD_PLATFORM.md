@@ -46,10 +46,10 @@ RecruitFlow-Platform/
 
 Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 
-- **Enforcement BR-01 (Persetujuan Mutlak HR)**:
+- **Enforcement BR-01 (Persetujuan Mutlak Manusia — HR / Hiring User)**:
   Middleware pada rute `/robot/messages` secara ketat memfilter query database:
   `WHERE status = 'PENDING' AND application.status IN ('DISETUJUI_UNDANG', 'DISETUJUI_TOLAK')`.
-  Upaya robot atau API manapun untuk memicu pengiriman pesan kepada kandidat yang masih berstatus `MENUNGGU_KEPUTUSAN` atau `BARU` akan langsung ditolak peladen dengan status HTTP `422 Unprocessable Entity`.
+  Upaya robot atau API manapun untuk memicu pengiriman pesan kepada kandidat yang masih berstatus `BARU`, `MENUNGGU_KEPUTUSAN`, atau `MENUNGGU_USER` akan langsung ditolak peladen dengan status HTTP `422 Unprocessable Entity`.
 - **Enforcement BR-04 (Pencegahan Duplikasi Lamaran)**:
   Pendaftaran lamaran baru memverifikasi kombinasi `email` + `nomor_telepon` pada `job_id` aktif yang sama. Bila ditemukan lamaran aktif, peladen mengembalikan pesan penolakan ramah tanpa memproses ulang berkas.
 - **Enforcement BR-05 & Mitigasi Bentrok (Slot Concurrency)**:
@@ -66,7 +66,10 @@ Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 ### A1 – Halaman Login Staf
 - Otentikasi berbasis email dan kata sandi dengan pengamanan *hash* (Bcrypt/Argon2).
 - Proteksi terhadap brute-force (pembatasan rate-limiting) dan sesi kedaluwarsa otomatis.
-- Pengalihan otomatis (*role-based redirection*): HR dan Admin diarahkan ke Dashboard A2; Interviewer diarahkan ke Jadwal Saya I1.
+- Pengalihan otomatis (*role-based redirection*):
+  - `HR` dan `ADMIN` diarahkan ke Dashboard A2.
+  - `HIRING_USER` (User departemen pemilik posisi) diarahkan langsung ke **Tampilan Sederhana Gerbang Persetujuan (A7)** yang hanya menampilkan lowongan dan kandidat yang menjadi tanggung jawabnya tanpa menu teknis RPA atau pengaturan sistem.
+  - `INTERVIEWER` diarahkan ke Jadwal Saya I1.
 
 ### A2 – Executive Dashboard
 - **Metrik Utama (Real-time Cards)**:
@@ -90,6 +93,13 @@ Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 
 ### A4 – Form Konfigurasi Lowongan & Kriteria Skoring
 - **Informasi Posisi**: Judul lowongan, deskripsi pekerjaan, spesifikasi, lokasi kerja, kuota pelamar, batas waktu lamaran.
+- **Alur Persetujuan & Skala Rekrutmen**:
+  - `approval_mode`: Pilihan pihak pemberi persetujuan sesuai kebutuhan posisi:
+    - `USER_ONLY`: Keputusan langsung oleh *Hiring User* (`MENUNGGU_KEPUTUSAN` ➔ `DISETUJUI_UNDANG`/`DISETUJUI_TOLAK`).
+    - `HR_ONLY`: Keputusan langsung oleh HR.
+    - `HR_AND_USER`: Persetujuan berjenjang — HR melakukan penyaringan awal (`MENUNGGU_KEPUTUSAN` ➔ `MENUNGGU_USER`), lalu *Hiring User* mengesahkan keputusan final (`DISETUJUI_UNDANG`/`DISETUJUI_TOLAK`).
+  - `hiring_user_id`: Penugasan akun *Hiring User* pemilik posisi.
+  - `hiring_scale`: Indikator skala batch (`MASS_HIRING` untuk ±100 kandidat/posisi vs `MANAGEMENT` untuk ±10 kandidat/posisi) untuk mengoptimalkan tampilan default tinjauan.
 - **Penyusun Pertanyaan Screening**: Penambahan formulir isian terstruktur tambahan (Pilihan Ganda, Skala Angka, Ya/Tidak) yang wajib dijawab kandidat di portal.
 - **Penyusun Kriteria Robot**:
   - Syarat Knock-out Mutlak: Pendidikan minimal (SMK/D3/S1), Pengalaman kerja minimal (tahun), Kesediaan relokasi/domisili.
@@ -100,8 +110,9 @@ Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 - **Tombol Skor Ulang (*Rescore Engine*)**: Memungkinkan HR memicu robot untuk menghitung ulang skor seluruh pelamar lama apabila kriteria kualifikasi lowongan diperbarui (BR-12).
 
 ### A5 – Direktori Kandidat
-- Tabel pelamar terpadu: Nama Kandidat, Posisi Dilamar, Nilai Skor Robot, Kelompok Rekomendasi, Status Alur Kerja, Waktu Melamar.
+- Tabel pelamar terpadu: Nama Kandidat, Posisi Dilamar, Nilai Skor Robot, Kelompok Rekomendasi, Ringkasan Alasan Robot (1 baris), Status Alur Kerja, Waktu Melamar.
 - Filter komprehensif: Berdasarkan lowongan, kelompok evaluasi, status kandidat, dan rentang tanggal.
+- Dukungan Skala Batch: Pilihan tampilan hingga **100 baris per halaman** untuk skenario *mass hiring* (~100 kandidat/posisi) agar dapat meninjau satu batch posisi dalam satu layar tanpa banyak perpindahan halaman.
 - Pencarian cerdas: Berdasarkan nama, email, atau keahlian spesifik.
 - Aksi: Buka Lembar Detail (A6), Aksi Massal (Seleksi banyak kandidat untuk disetujui sekaligus), dan Ekspor Data ke berkas CSV.
 
@@ -116,15 +127,21 @@ Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 - **Panel Jejak Audit & Riwayat**: Linimasa perubahan status lamaran, rekam jejak keputusan HR sebelumnya, dan log transmisi pesan komunikasi.
 - **Tombol Keputusan Tunggal**: `Setujui Undang`, `Setujui Tolak`, `Pindahkan ke Talent Pool`, atau `Proses Ulang Robot`.
 
-### A7 – Ruang Kendali Persetujuan HR (*Review & Approval Gate*)
+### A7 – Ruang Kendali Persetujuan Ultra-Simpel (*Review & Approval Gate*)
+Dirancang agar pemilihan kandidat oleh HR maupun *Hiring User* berlangsung **sesimpel dan secepat mungkin** tanpa perlu bergantung pada Excel:
+- **Mode Tampilan Adaptif Berdasarkan Skala & Peran**:
+  - **Tampilan Fokus *Hiring User***: Antarmuka ringkas bebas distraksi — hanya menampilkan daftar posisi yang ditugaskan kepada User tersebut, ringkasan skor + 1 baris alasan robot, dan tombol keputusan langsung.
+  - **Batch *Mass Hiring* (±100 kandidat/posisi)**: Mendukung daftar padat hingga 100 baris/halaman, pengurutan otomatis dari skor tertinggi, serta *checkbox* seleksi massal untuk menyetujui/menolak banyak kandidat sekaligus.
+  - **Batch *Management* (±10 kandidat/posisi)**: Menampilkan kartu/baris lebih lapang dengan akses cepat ke pratinjau CV & catatan kualitatif sebelum persetujuan.
 - **Tab Navigasi Khusus**:
   1. *Perlu Dicek (Default)*: Menampilkan kandidat dengan skor meragukan ($55 \le \text{skor} < 75$), kandidat dengan data tidak lengkap, atau yang terdeteksi selisih form vs CV. Halaman ini **TIDAK menyediakan persetujuan massal instan** guna mencegah kelalaian verifikasi manusia.
   2. *Sesuai*: Menampilkan kandidat berkualitas tinggi hasil seleksi robot (skor $\ge 75$).
   3. *Tidak Sesuai*: Menampilkan kandidat yang melanggar syarat knock-out atau memiliki skor $< 55$.
   4. *Perlu Ditinjau (Pengecualian)*: Menampilkan berkas CV yang korup atau gagal diproses robot.
-- **Aksi Persetujuan Cepat**:
-  - Tombol aksi satu klik per baris kandidat.
-  - Tombol Persetujuan Massal (*Bulk Approval*): Tombol *"Setujui Semua Sesuai ➔ Undang"* dan *"Setujui Semua Tidak Sesuai ➔ Tolak"* yang dilengkapi modal dialog konfirmasi rekapitulasi jumlah kandidat terdampak sebelum dieksekusi.
+  5. *Menunggu User* (khusus mode `HR_AND_USER`): Menampilkan kandidat yang telah lolos seleksi awal HR dan menunggu persetujuan final *Hiring User*.
+- **Aksi Persetujuan Cepat (1-Klik)**:
+  - Tombol aksi satu klik per baris kandidat (`Undang` / `Lolos ke User` / `Tolak`) dengan ringkasan alasan robot langsung terlihat di baris tanpa harus membuka halaman A6.
+  - Tombol Persetujuan Massal (*Bulk Approval*): Tombol *"Setujui Semua Sesuai ➔ Undang"* (atau *"➔ Teruskan ke User"* pada mode `HR_AND_USER`) dan *"Setujui Semua Tidak Sesuai ➔ Tolak"* yang dilengkapi modal dialog konfirmasi rekapitulasi jumlah kandidat terdampak sebelum dieksekusi.
 
 ### A8 – Manajemen Template Komunikasi
 - Editor dinamis untuk subjek dan isi template pesan (Undangan Wawancara, Penolakan Hangat, Pengingat Konfirmasi, Pengingat H-1, Pembaruan Jadwal).
@@ -159,7 +176,7 @@ Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 - Pencarian berdasarkan tag kompetensi dan keahlian untuk rekrutmen lowongan baru di masa mendatang.
 
 ### A14 – Pengaturan Sistem & Manajemen Akun
-- Manajemen profil pengguna sistem dan penugasan peran (HR Recruiter, Reviewer, Interviewer, Admin).
+- Manajemen profil pengguna sistem dan penugasan peran (`HR`, `HIRING_USER`, `INTERVIEWER`, `ADMIN`).
 - Manajemen otentikasi robot: Pembuatan, inspeksi, dan rotasi Bearer Token API Robot.
 - Konfigurasi kebijakan privasi data dan jangka waktu retensi penghapusan berkas CV lama.
 
@@ -168,14 +185,17 @@ Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 ## 5. Model Data & Skema Database
 
 ```
-┌──────────────┐       ┌──────────────┐       ┌──────────────────────┐
-│    users     │       │     jobs     │       │ screening_questions  │
-├──────────────┤       ├──────────────┤       ├──────────────────────┤
-│ id           │       │ id           │◄──────│ id                   │
-│ name         │       │ title        │       │ job_id               │
-│ email        │       │ quota        │       │ question_text        │
-│ role         │       │ status       │       │ question_type        │
-└──────┬───────┘       └──────┬───────┘       └──────────────────────┘
+┌──────────────┐       ┌──────────────────┐       ┌──────────────────────┐
+│    users     │       │       jobs       │       │ screening_questions  │
+├──────────────┤       ├──────────────────┤       ├──────────────────────┤
+│ id           │       │ id               │◄──────│ id                   │
+│ name         │       │ title            │       │ job_id               │
+│ email        │       │ quota            │       │ question_text        │
+│ role         │       │ approval_mode    │       │ question_type        │
+└──────┬───────┘       │ hiring_user_id   │       └──────────────────────┘
+       │               │ hiring_scale     │
+       │               │ status           │
+       │               └────────┬─────────┘
        │                      │
        │                      ├──────────────────────────────────────┐
        │                      ▼                                      ▼
@@ -197,10 +217,10 @@ Platform bertindak sebagai garda terdepan penegak kepatuhan sistem:
 │ id           │       │ extractions  │       │  interviews  │       │   messages   │
 │ app_id       │◄──────│ app_id       │       ├──────────────┤       ├──────────────┤
 │ user_id      │       │ text_content │       │ id           │       │ id           │
-│ decision     │       │ parsed_data  │       │ app_id       │       │ app_id       │
-│ notes        │       └──────────────┘       │ slot_id      │       │ type         │
-└──────────────┘                              │ status       │       │ status       │
-                                              └──────┬───────┘       └──────────────┘
+│ stage        │       │ parsed_data  │       │ app_id       │       │ app_id       │
+│ decision     │       └──────────────┘       │ slot_id      │       │ type         │
+│ notes        │                              │ status       │       │ status       │
+└──────────────┘                              └──────┬───────┘       └──────────────┘
                                                      │
                                                      ▼
                                               ┌──────────────┐
@@ -253,5 +273,5 @@ Header Wajib: `Authorization: Bearer <RF_Api_Token>`.
 - `POST /robot/logs` : Menerima telemetri log real-time dari aktivitas robot.
 - `POST /robot/heartbeat` : Menerima sinyal detak status operasional robot.
 
-### 6.3 Rute Kontrol HR (Konsumsi Dashboard Internal)
-- Rute otentikasi staf, operasi CRUD lowongan kerja, review kandidat, persetujuan tunggal dan massal (`/applications/:id/decision` dan `/applications/bulk-decision`), konfigurasi template, alokasi slot wawancara, dan visualisasi pemantauan robot.
+### 6.3 Rute Kontrol HR & Hiring User (Konsumsi Dashboard Internal)
+- Rute otentikasi staf (`HR`, `HIRING_USER`, `INTERVIEWER`, `ADMIN`), operasi CRUD lowongan kerja (termasuk `approval_mode`, `hiring_user_id`, dan `hiring_scale`), daftar kandidat dengan dukungan batch hingga 100 baris (`limit=100`), review kandidat, persetujuan tunggal dan massal sesuai tahap approval (`/applications/:id/decision` dan `/applications/bulk-decision`), konfigurasi template, alokasi slot wawancara, dan visualisasi pemantauan robot.
