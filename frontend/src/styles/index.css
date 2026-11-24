@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --hairline: 1px;
+  --hairline-color: rgba(23, 32, 51, 0.1);
+  --hairline-color-strong: rgba(23, 32, 51, 0.18);
+  --hairline-dark-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (min-resolution: 2dppx) {
+  :root {
+    --hairline: 0.5px;
+  }
+}
+
+@media (min-resolution: 3dppx) {
+  :root {
+    --hairline: 0.333px;
+  }
+}
+
 @layer base {
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -12,6 +31,152 @@
   h1, h2, h3, h4, .font-display {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
+}
+
+/* Lenis smooth scroll base */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Hairline Design Utilities — crisp sub-pixel borders & grids */
+.hairline-card {
+  box-shadow:
+    0 0 0 var(--hairline) var(--hairline-color),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.hairline-card:hover {
+  box-shadow:
+    0 0 0 var(--hairline) var(--hairline-color-strong),
+    0 6px 20px -6px rgba(15, 23, 42, 0.08);
+}
+
+.hairline-dark {
+  box-shadow:
+    0 0 0 var(--hairline) var(--hairline-dark-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.hairline-divider {
+  height: var(--hairline);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--hairline-color-strong) 20%,
+    var(--hairline-color-strong) 80%,
+    transparent 100%
+  );
+}
+
+.hairline-divider-dark {
+  height: var(--hairline);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 204, 0, 0.35) 50%,
+    transparent 100%
+  );
+}
+
+.hairline-grid-dark {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) var(--hairline), transparent var(--hairline)),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) var(--hairline), transparent var(--hairline));
+  background-size: 48px 48px;
+}
+
+/* @lucasmarkes/hairline custom themes matching RecruitFlow Navy & Yellow */
+.hairline-theme-hero {
+  --hairline-plate: #0F172A;
+  --hairline-hi: #FFCC00;
+  --hairline-edge: #E2E8F0;
+  --hairline-mid: #64748B;
+  --hairline-lo: #1E293B;
+  --hairline-stroke: 1;
+}
+
+.hairline-theme-navy {
+  --hairline-plate: #172033;
+  --hairline-hi: #FFCC00;
+  --hairline-edge: #E2E8F0;
+  --hairline-mid: #64748B;
+  --hairline-lo: #25324A;
+  --hairline-stroke: 0.95;
+}
+
+.hairline-theme-amber {
+  --hairline-plate: #FFFBE6;
+  --hairline-hi: #172033;
+  --hairline-edge: #172033;
+  --hairline-mid: #A16207;
+  --hairline-lo: #FDE68A;
+  --hairline-stroke: 1;
+}
+
+/* Sakuga VFX Keyframes */
+@keyframes sakuga-spark {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0) scaleY(1.4);
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(var(--dist) * -1)) scaleY(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes sakuga-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.35);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes sakuga-pop-tag {
+  0% {
+    transform: translate(-50%, 0) scale(0.5) rotate(-8deg);
+    opacity: 0;
+  }
+  30% {
+    transform: translate(-50%, -18px) scale(1.12) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -34px) scale(0.95) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+.sakuga-spark {
+  animation: sakuga-spark 480ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.sakuga-ring {
+  animation: sakuga-ring 460ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.sakuga-pop-tag {
+  animation: sakuga-pop-tag 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .tabular-nums {

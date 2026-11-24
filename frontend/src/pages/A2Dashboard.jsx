@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, Bot, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { StatusChip } from '../components/CockpitShell';
 import { AreaTrendChart, DonutChart } from '../components/Charts';
+import { SakugaButton, SakugaCard } from '../components/SakugaVFX';
 
 export default function A2Dashboard({ waitingCount, onNavigate }) {
   const [period, setPeriod] = useState('30 Hari');
@@ -48,14 +49,14 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
           >
             {robotOffline ? 'Pulihkan Robot' : 'Sim. Robot Offline'}
           </button>
-          <button
-            type="button"
+          <SakugaButton
             onClick={() => onNavigate('gate')}
+            impactText="GATE!"
             className="px-4 h-10 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] text-xs font-semibold inline-flex items-center gap-2"
           >
             Gerbang Persetujuan ({waitingCount})
             <ArrowRight className="w-4 h-4" strokeWidth={1.75} />
-          </button>
+          </SakugaButton>
         </div>
       </div>
 
@@ -66,12 +67,13 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
           { title: 'Menunggu review', val: String(waitingCount), badge: 'Perlu aksi', kind: 'warning', sub: '14 Perlu Dicek · 22 Sesuai Kriteria', click: 'gate' },
           { title: 'Wawancara mgg ini', val: '42', badge: '81% komit', kind: 'info', sub: '34 hadir terkonfirmasi · 8 menunggu', click: 'interviews' },
           { title: 'Tingkat kehadiran', val: '88,2%', badge: '+6,1%', kind: 'success', sub: 'Naik sejak pengingat H-1 aktif' },
-        ].map((k) => (
-          <div
+        ].map((k, idx) => (
+          <SakugaCard
             key={k.title}
-            onClick={() => k.click && onNavigate(k.click)}
-            className={`bg-white rounded-xl border border-slate-200 p-5 space-y-2 shadow-sm ${
-              k.click ? 'cursor-pointer hover:border-[#172033] transition' : ''
+            delay={idx * 0.05}
+            onClick={k.click ? () => onNavigate(k.click) : undefined}
+            className={`bg-white rounded-xl p-5 space-y-2 ${
+              k.click ? 'cursor-pointer' : ''
             }`}
           >
             <div className="flex items-center justify-between gap-2">
@@ -80,7 +82,7 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
             </div>
             <p className="font-display font-bold text-3xl text-[#172033] tabular-nums">{k.val}</p>
             <p className="text-xs text-slate-500">{k.sub}</p>
-          </div>
+          </SakugaCard>
         ))}
       </div>
 

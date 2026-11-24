@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Bot, RefreshCw, AlertTriangle, Check, Lock, Copy, Bookmark, FileText, Clock } from 'lucide-react';
+import { Terminal } from '@lucasmarkes/hairline/react';
 import { StatusChip } from '../components/CockpitShell';
 import { DonutChart } from '../components/Charts';
+import { SakugaButton, SakugaCard } from '../components/SakugaVFX';
 import { INITIAL_TALENT_POOL } from '../services/mockData';
 
 export function A11Robot() {
@@ -18,9 +20,9 @@ export function A11Robot() {
           <h1 className="font-display font-bold text-2xl text-[#172033]">Pemantauan Robot UiPath</h1>
           <p className="text-sm text-slate-500">Status 4 proses RPA, pusat pengecualian (Retry), dan live log tanpa PII</p>
         </div>
-        <button
-          type="button"
+        <SakugaButton
           disabled={running}
+          impactText="RUN RPA!"
           onClick={() => {
             setRunning(true);
             setTimeout(() => setRunning(false), 1500);
@@ -29,7 +31,7 @@ export function A11Robot() {
         >
           <Bot className="w-4 h-4" strokeWidth={1.5} />
           {running ? 'Permintaan masuk antrean...' : 'Jalankan RF_CV_Screening Sekarang'}
-        </button>
+        </SakugaButton>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -38,8 +40,8 @@ export function A11Robot() {
           ['RF_Messaging', 'Email & WhatsApp', 'Antre: 3', 'success', '612 pesan · 99,5% sukses · Patuh BR-01'],
           ['RF_Scheduling', 'Alokasi & Pelepasan Slot', 'Standby', 'neutral', '42 slot dikunci · 5 dilepas otomatis'],
           ['RF_Reporting', 'Agregasi Metrik Harian', '18.00 WIB', 'info', 'Laporan terakhir: Kemarin 18.00 WIB'],
-        ].map(([name, desc, st, k, stat]) => (
-          <div key={name} className="bg-white rounded-xl border border-slate-200 p-4 space-y-2 shadow-sm">
+        ].map(([name, desc, st, k, stat], idx) => (
+          <SakugaCard key={name} delay={idx * 0.05} className="bg-white rounded-xl p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#172033]">
                 <Bot className="w-4 h-4" strokeWidth={1.5} />
@@ -49,7 +51,7 @@ export function A11Robot() {
             </div>
             <p className="text-xs text-slate-600">{desc}</p>
             <p className="text-[11px] text-slate-400">{stat}</p>
-          </div>
+          </SakugaCard>
         ))}
       </div>
 
@@ -95,18 +97,23 @@ export function A11Robot() {
         )}
       </div>
 
-      {/* Live Terminal (No PII) */}
-      <div className="bg-[#172033] rounded-xl p-5 space-y-2 font-mono text-xs text-slate-200">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-700">
-          <span className="font-sans font-semibold text-[#FFCC00]">
-            Live Robot Log · Mode Aman (PII Disamarkan sesuai kebijakan privasi)
-          </span>
-          <StatusChip variant="navy">Auto-scroll Aktif</StatusChip>
+      {/* Live Terminal (No PII) + @lucasmarkes/hairline Terminal Figure */}
+      <div className="bg-[#172033] rounded-xl p-5 grid grid-cols-1 lg:grid-cols-4 gap-5 items-center">
+        <div className="lg:col-span-3 space-y-2 font-mono text-xs text-slate-200">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-700">
+            <span className="font-sans font-semibold text-[#FFCC00]">
+              Live Robot Log · Mode Aman (PII Disamarkan sesuai kebijakan privasi)
+            </span>
+            <StatusChip variant="navy">Auto-scroll Aktif</StatusChip>
+          </div>
+          <p>[13:45:02 INFO] RF_CV_Screening · Memulai ekstraksi dokumen untuk ref=APP-2026-X9A7 (PII masked)</p>
+          <p>[13:45:05 INFO] RF_CV_Screening · Skor dihitung: total=86, kelompok=SESUAI, confidence=0.94</p>
+          <p className="text-amber-300">[13:45:12 WARN] RF_CV_Screening · ref=APP-2026-R4T9 teks kosong/scan kabur -&gt; PERLU_DITINJAU</p>
+          <p>[13:46:01 INFO] RF_Messaging · Memeriksa antrean pesan approval=APPROVED (BR-01 tervalidasi)</p>
         </div>
-        <p>[13:45:02 INFO] RF_CV_Screening · Memulai ekstraksi dokumen untuk ref=APP-2026-X9A7 (PII masked)</p>
-        <p>[13:45:05 INFO] RF_CV_Screening · Skor dihitung: total=86, kelompok=SESUAI, confidence=0.94</p>
-        <p className="text-amber-300">[13:45:12 WARN] RF_CV_Screening · ref=APP-2026-R4T9 teks kosong/scan kabur -&gt; PERLU_DITINJAU</p>
-        <p>[13:46:01 INFO] RF_Messaging · Memeriksa antrean pesan approval=APPROVED (BR-01 tervalidasi)</p>
+        <div className="hairline-theme-navy rounded-xl bg-[#172033] p-1">
+          <Terminal play intensity={0.75} theme="dark" label="Terminal Live Log Robot" className="w-full" />
+        </div>
       </div>
     </div>
   );

@@ -9,14 +9,13 @@
     "preview": "vite preview --port 5173"
   },
   "dependencies": {
-    "lucide-react": "^0.460.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@lucasmarkes/hairline": "^0.5.1",
     "gsap": "^3.12.5",
-    "framer-motion": "^11.0.0",
-    "lenis": "^1.0.0",
-    "sakuga": "^1.0.0",
-    "hairline": "^0.1.0"
+    "lenis": "^1.1.18",
+    "lucide-react": "^0.460.0",
+    "motion": "^11.15.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

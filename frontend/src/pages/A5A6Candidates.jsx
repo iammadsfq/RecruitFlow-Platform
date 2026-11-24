@@ -18,10 +18,14 @@ const STATUS_STYLE = {
   MENUNGGU_USER: ['Menunggu User', 'info'],
 };
 
-export function A5Candidates({ candidates, onSelectCandidate, onBulkApprove, onNavigateGate }) {
-  const [search, setSearch] = useState('');
+export function A5Candidates({ candidates, externalSearch = '', onSelectCandidate, onBulkApprove, onNavigateGate }) {
+  const [search, setSearch] = useState(externalSearch);
   const [groupFilter, setGroupFilter] = useState('ALL');
   const [selectedIds, setSelectedIds] = useState(['cand_1', 'cand_2']);
+
+  React.useEffect(() => {
+    if (externalSearch !== undefined) setSearch(externalSearch);
+  }, [externalSearch]);
 
   const filtered = candidates.filter((c) => {
     const q = search.trim().toLowerCase();

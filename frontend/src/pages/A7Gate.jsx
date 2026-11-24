@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Shield, Eye, X, Check, RotateCcw, Users } from 'lucide-react';
+import { Padlock } from '@lucasmarkes/hairline/react';
 import { StatusChip } from '../components/CockpitShell';
+import { SakugaButton, SakugaCard } from '../components/SakugaVFX';
 
 export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewCandidate, role }) {
   const [activeTab, setActiveTab] = useState('PERLU_DICEK');
@@ -107,15 +109,18 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
 
       {/* PRD Guardrail Banner on Perlu Dicek */}
       {activeTab === 'PERLU_DICEK' && (
-        <div className="bg-[#FFFBE6] border border-[#FFCC00] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1">
-            <Shield className="w-5 h-5 text-[#172033] shrink-0 mt-0.5" strokeWidth={1.5} />
+        <div className="bg-[#FFFBE6] border border-[#FFCC00] rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4 flex-1 min-w-[260px]">
+            <div className="hairline-theme-amber w-20 shrink-0 rounded-lg overflow-hidden">
+              <Padlock play intensity={0.8} theme="light" label="Kunci Guardrail BR-01" className="w-full" />
+            </div>
             <div className="text-xs">
-              <p className="font-bold text-[#172033]">
+              <p className="font-bold text-[#172033] inline-flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-[#172033]" strokeWidth={1.75} />
                 Aturan PRD · Tab "Perlu Dicek" (Skor Ambang 65–74)
               </p>
-              <p className="text-slate-600 mt-0.5">
-                Persetujuan massal (Bulk Approve) sengaja dinonaktifkan pada tab ini agar peninjau memeriksa alasan selisih tiap kandidat satu per satu.
+              <p className="text-slate-600 mt-1">
+                Persetujuan massal (Bulk Approve) sengaja dikunci pada tab ini agar peninjau memeriksa alasan selisih tiap kandidat satu per satu.
               </p>
             </div>
           </div>
@@ -139,14 +144,14 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
               <p className="text-blue-900">Sisa kapasitas slot wawancara: 28 kursi (mencukupi).</p>
             </div>
           </div>
-          <button
-            type="button"
+          <SakugaButton
             onClick={() => setBulkModalOpen(true)}
+            impactText="BULK!"
             className="px-4 py-2 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] text-xs font-semibold inline-flex items-center gap-1.5"
           >
             <Check className="w-4 h-4" strokeWidth={2} />
             Setujui Semua ({list.length})
-          </button>
+          </SakugaButton>
         </div>
       )}
 
@@ -159,10 +164,11 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
         </div>
       ) : (
         <div className={hiringUserMode ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-3'}>
-          {list.map((c) => (
-            <div
+          {list.map((c, idx) => (
+            <SakugaCard
               key={c.id}
-              className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm"
+              delay={idx * 0.04}
+              className="bg-white rounded-xl p-4 flex flex-wrap items-center justify-between gap-4"
             >
               <div className="flex items-start gap-3 flex-1 min-w-[260px]">
                 <div className="w-11 h-11 rounded-full bg-[#FFF7CC] text-[#172033] font-bold text-sm flex items-center justify-center shrink-0">
@@ -209,19 +215,19 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
                         Ke User
                       </button>
                     )}
-                    <button
-                      type="button"
+                    <SakugaButton
                       disabled={activeTab === 'PERLU_DITINJAU'}
                       onClick={() => handleAction(c, 'DISETUJUI_UNDANG')}
+                      impactText="APPROVED!"
                       className="px-3.5 h-9 rounded-lg bg-[#FFCC00] hover:bg-[#F2BE00] disabled:bg-slate-200 disabled:text-slate-400 text-[#172033] text-xs font-semibold inline-flex items-center gap-1"
                     >
                       <Check className="w-3.5 h-3.5" strokeWidth={2} />
                       Setujui Undang
-                    </button>
+                    </SakugaButton>
                   </>
                 )}
               </div>
-            </div>
+            </SakugaCard>
           ))}
         </div>
       )}
