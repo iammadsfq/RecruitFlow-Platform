@@ -11,7 +11,12 @@
   "dependencies": {
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "gsap": "^3.12.5",
+    "framer-motion": "^11.0.0",
+    "lenis": "^1.0.0",
+    "sakuga": "^1.0.0",
+    "hairline": "^0.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

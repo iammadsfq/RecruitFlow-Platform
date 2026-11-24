@@ -7,7 +7,8 @@ import { A5Candidates, A6CandidateDetail } from './pages/A5A6Candidates';
 import A7Gate from './pages/A7Gate';
 import { A8Messages, A9Slots, A10Calendar } from './pages/A8A9A10Ops';
 import { A11Robot, A12Reports, A13TalentPool, A14Settings, I1MySchedule } from './pages/A11A12A13A14Admin';
-import { INITIAL_JOBS, INITIAL_CANDIDATES, ROLE_PERMISSIONS } from './services/mockData';
+import Landing from './pages/Landing';
+
 
 const BREADCRUMBS = {
   dashboard: ['Cockpit HR', 'Executive Dashboard'],
@@ -36,6 +37,7 @@ export default function App() {
   const [selectedCandidateId, setSelectedCandidateId] = useState('cand_1');
   const [globalSearch, setGlobalSearch] = useState('');
   const [offlineMode, setOfflineMode] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
 
   const handleLogin = (chosenRole) => {
     setRole(chosenRole);
@@ -45,7 +47,12 @@ export default function App() {
     else setPage('dashboard');
   };
 
+  if (showLanding) {
+    return <Landing onProceed={() => setShowLanding(false)} />;
+  }
   if (!loggedIn) {
+    return <A1Login onLogin={handleLogin} />;
+  }
     return <A1Login onLogin={handleLogin} />;
   }
 
