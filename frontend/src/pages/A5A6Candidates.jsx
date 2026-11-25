@@ -55,7 +55,16 @@ export function A5Candidates({ candidates, externalSearch = '', onSelectCandidat
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => alert('Ekspor CSV UTF-8 dimulai (data disimulasikan).')}
+            onClick={() => {
+              const csv = ['Kode,Nama,Posisi,Skor,Kelompok,Status', ...filtered.map((c) => `${c.code},"${c.name}","${c.jobTitle}",${c.score ?? ''},${c.group},${c.status}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'kandidat_recruitflow.csv';
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
             className="px-4 h-10 rounded-xl border border-slate-300 bg-white text-xs font-semibold inline-flex items-center gap-2 hover:bg-slate-50"
           >
             <Download className="w-4 h-4" strokeWidth={1.5} />

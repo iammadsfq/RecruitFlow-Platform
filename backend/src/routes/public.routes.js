@@ -118,11 +118,11 @@ router.post('/applications', upload.single('cv_file'), (req, res) => {
 // 4. Pelacakan Status Lamaran Mandiri (P4 - Tanpa Membocorkan Skor Angka Internal)
 router.get('/applications/:token', (req, res) => {
   const app = db.prepare(`
-    SELECT a.id, a.name, a.status, a.created_at, j.title as job_title, j.department
+    SELECT a.id, a.name, a.status, a.created_at, j.title as job_title, j.department, j.location
     FROM applications a
     JOIN jobs j ON a.job_id = j.id
-    WHERE a.token_status = ?
-  `).get(req.params.token);
+    WHERE a.token_status = ? OR LOWER(a.id) = LOWER(?)
+  `).get(req.params.token, req.params.token);
 
   if (!app) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tautan status tidak valid' });
 
@@ -145,12 +145,45 @@ router.get('/applications/:token', (req, res) => {
 
   const statusInfo = candidateStatusMap[app.status] || { step: 2, label: 'Sedang Diproses', desc: 'Tahapan seleksi sedang berlangsung.' };
 
+  const interviewRow = db.prepare(`
+    SELECT i.id, i.status, i.hold_until, i.token_confirm, s.start_time, s.end_time,
+           j.interview_location, j.documents_required, j.contact_person
+    FROM interviews i
+    JOIN slots s ON i.slot_id = s.id
+    JOIN applications a2 ON i.application_id = a2.id
+    JOIN jobs j ON a2.job_id = j.id
+    WHERE i.application_id = ?
+    ORDER BY i.created_at DESC
+    LIMIT 1
+  `).get(app.id);
+
+  let interview = null;
+  if (interviewRow) {
+    const holdMs = new Date(interviewRow.hold_until).getTime();
+    const remainingSeconds = Number.isFinite(holdMs) ? Math.max(0, Math.floor((holdMs - Date.now()) / 1000)) : 72000;
+    interview = {
+      id: interviewRow.id,
+      token: interviewRow.token_confirm,
+      status: interviewRow.status === 'TERKONFIRMASI' ? 'CONFIRMED' : interviewRow.status === 'TIDAK_MERESPONS' ? 'EXPIRED' : 'PENDING',
+      start_time: interviewRow.start_time,
+      end_time: interviewRow.end_time,
+      location: interviewRow.interview_location,
+      documents: interviewRow.documents_required,
+      contact: interviewRow.contact_person,
+      remaining_seconds: remainingSeconds,
+    };
+  }
+
   res.json({
+    id: app.id,
     candidate_name: app.name,
     job_title: app.job_title,
     department: app.department,
+    location: app.location,
     applied_at: app.created_at,
-    status_info: statusInfo
+    stage: app.status,
+    status_info: statusInfo,
+    interview
   });
 });
 
@@ -202,6 +235,44 @@ router.post('/interviews/:token/decline', (req, res) => {
     db.prepare("UPDATE applications SET status = 'TIDAK_HADIR', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(interview.application_id);
     db.exec('COMMIT;');
     res.json({ success: true, message: 'Respons Anda telah dicatat. Terima kasih telah mengabari kami.' });
+  } catch (err) {
+    db.exec('ROLLBACK;');
+    res.status(500).json({ code: 'SERVER_ERROR', message: err.message });
+  }
+});
+
+// 8. Slot Tersedia & Reschedule Wawancara
+router.get('/slots', (req, res) => {
+  const rows = db.prepare(`
+    SELECT s.id, s.start_time, s.end_time, i.name as interviewer_name
+    FROM slots s
+    JOIN interviewers i ON s.interviewer_id = i.id
+    WHERE s.status = 'TERSEDIA'
+    ORDER BY s.start_time ASC
+    LIMIT 12
+  `).all();
+  res.json(rows);
+});
+
+router.post('/interviews/:token/reschedule', (req, res) => {
+  const { slot_id } = req.body;
+  const interview = db.prepare('SELECT id, slot_id, application_id FROM interviews WHERE token_confirm = ?').get(req.params.token);
+  if (!interview) return res.status(404).json({ code: 'NOT_FOUND', message: 'Tautan tidak valid' });
+  if (!slot_id) return res.status(400).json({ code: 'INVALID_INPUT', message: 'Slot baru wajib dipilih' });
+
+  db.exec('BEGIN TRANSACTION;');
+  try {
+    const newSlot = db.prepare("SELECT id, status, start_time FROM slots WHERE id = ?").get(slot_id);
+    if (!newSlot || newSlot.status !== 'TERSEDIA') {
+      db.exec('ROLLBACK;');
+      return res.status(409).json({ code: 'SLOT_TAKEN', message: 'Slot baru saja diambil kandidat lain' });
+    }
+    db.prepare("UPDATE slots SET status = 'TERSEDIA' WHERE id = ?").run(interview.slot_id);
+    db.prepare("UPDATE slots SET status = 'TERISI' WHERE id = ?").run(slot_id);
+    db.prepare("UPDATE interviews SET slot_id = ?, status = 'TERKONFIRMASI', confirmed_at = CURRENT_TIMESTAMP WHERE id = ?").run(slot_id, interview.id);
+    db.prepare("UPDATE applications SET status = 'TERKONFIRMASI', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(interview.application_id);
+    db.exec('COMMIT;');
+    res.json({ success: true, start_time: newSlot.start_time });
   } catch (err) {
     db.exec('ROLLBACK;');
     res.status(500).json({ code: 'SERVER_ERROR', message: err.message });

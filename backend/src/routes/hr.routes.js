@@ -131,16 +131,34 @@ router.get('/applications/:id', (req, res) => {
   });
 });
 
+// 4b. Unduh / Preview CV PDF untuk A6 Embedded Viewer
+router.get('/applications/:id/cv', (req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+  const app = db.prepare('SELECT cv_file_path FROM applications WHERE id = ?').get(req.params.id);
+  if (!app || !app.cv_file_path) return res.status(404).json({ code: 'NOT_FOUND', message: 'Berkas CV tidak ditemukan' });
+  const resolved = path.resolve(app.cv_file_path);
+  if (!fs.existsSync(resolved)) return res.status(404).json({ code: 'FILE_NOT_FOUND', message: 'Berkas CV tidak ditemukan di disk' });
+  res.sendFile(resolved);
+});
+
 // 5. Keputusan Tunggal HR (A6 / A7 - Penegakan BR-01)
 router.post('/applications/:id/decision', (req, res) => {
-  const { decision, notes } = req.body; // 'UNDANG' atau 'TOLAK'
+  const { decision, notes } = req.body; // 'UNDANG', 'TOLAK', 'TALENT_POOL', atau 'MENUNGGU_USER'
   const app = db.prepare('SELECT * FROM applications WHERE id = ?').get(req.params.id);
   if (!app) return res.status(404).json({ code: 'NOT_FOUND', message: 'Kandidat tidak ditemukan' });
 
   let newStatus = '';
+  let dbDecision = decision;
   if (decision === 'UNDANG') newStatus = 'DISETUJUI_UNDANG';
   else if (decision === 'TOLAK') newStatus = 'DISETUJUI_TOLAK';
-  else return res.status(400).json({ code: 'INVALID_DECISION', message: 'Keputusan harus UNDANG atau TOLAK' });
+  else if (decision === 'TALENT_POOL') newStatus = 'TALENT_POOL';
+  else if (decision === 'MENUNGGU_USER') {
+    newStatus = 'MENUNGGU_USER';
+    dbDecision = 'UNDANG';
+  } else {
+    return res.status(400).json({ code: 'INVALID_DECISION', message: 'Keputusan harus UNDANG, TOLAK, TALENT_POOL, atau MENUNGGU_USER' });
+  }
 
   db.exec('BEGIN TRANSACTION;');
   try {
@@ -148,7 +166,7 @@ router.post('/applications/:id/decision', (req, res) => {
     db.prepare(`
       INSERT INTO decisions (id, application_id, user_id, previous_status, new_status, decision, notes)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(`dec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, app.id, req.user?.id || 'hr_admin', app.status, newStatus, decision, notes || '');
+    `).run(`dec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, app.id, req.user?.id || 'hr_admin', app.status, newStatus, dbDecision, notes || '');
 
     // Perbarui status lamaran
     db.prepare('UPDATE applications SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newStatus, app.id);
@@ -229,6 +247,92 @@ router.get('/monitor/status', (req, res) => {
   const heartbeats = db.prepare('SELECT * FROM heartbeats').all();
   const logs = db.prepare('SELECT * FROM robot_logs ORDER BY created_at DESC LIMIT 50').all();
   res.json({ heartbeats, logs });
+});
+
+// 8. Retry aplikasi gagal / Rescore lowongan (A6, A4, A11)
+router.post('/applications/:id/retry', (req, res) => {
+  const result = db.prepare("UPDATE applications SET status = 'BARU', claimed_by_robot = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
+  if (result.changes === 0) return res.status(404).json({ code: 'NOT_FOUND', message: 'Kandidat tidak ditemukan' });
+  res.json({ success: true, status: 'BARU' });
+});
+
+router.put('/jobs/:id', (req, res) => {
+  const { status, title, location, quota } = req.body || {};
+  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
+  if (!job) return res.status(404).json({ code: 'NOT_FOUND', message: 'Lowongan tidak ditemukan' });
+  db.prepare(`
+    UPDATE jobs SET status = COALESCE(?, status), title = COALESCE(?, title),
+    location = COALESCE(?, location), quota = COALESCE(?, quota) WHERE id = ?
+  `).run(status || null, title || null, location || null, quota ?? null, req.params.id);
+  res.json({ success: true });
+});
+
+router.post('/jobs/:id/rescore', (req, res) => {
+  const result = db.prepare("UPDATE applications SET status = 'BARU', claimed_by_robot = 0, updated_at = CURRENT_TIMESTAMP WHERE job_id = ? AND status IN ('MENUNGGU_KEPUTUSAN', 'PERLU_DITINJAU')").run(req.params.id);
+  res.json({ success: true, queued_count: result.changes });
+});
+
+// 9. Template Komunikasi (A8)
+router.get('/templates', (req, res) => {
+  res.json(db.prepare('SELECT * FROM message_templates ORDER BY message_type ASC').all());
+});
+
+router.put('/templates/:id', (req, res) => {
+  const { subject, body } = req.body || {};
+  db.prepare('UPDATE message_templates SET subject = COALESCE(?, subject), body = COALESCE(?, body), version = version + 1 WHERE id = ?').run(subject || null, body || null, req.params.id);
+  res.json({ success: true });
+});
+
+// 10. Pewawancara, Slot & Jadwal Wawancara (A9, A10)
+router.get('/slots', (req, res) => {
+  const rows = db.prepare(`
+    SELECT s.*, i.name as interviewer_name, i.email as interviewer_email
+    FROM slots s JOIN interviewers i ON s.interviewer_id = i.id
+    ORDER BY s.start_time ASC
+  `).all();
+  res.json(rows);
+});
+
+router.post('/slots/generate', (req, res) => {
+  const { interviewer_id, start_time, end_time } = req.body || {};
+  const interviewer = interviewer_id
+    ? db.prepare('SELECT id FROM interviewers WHERE id = ?').get(interviewer_id)
+    : db.prepare('SELECT id FROM interviewers LIMIT 1').get();
+  if (!interviewer) return res.status(400).json({ code: 'NO_INTERVIEWER', message: 'Belum ada pewawancara terdaftar' });
+  const slotId = `slot_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+  const start = start_time || new Date(Date.now() + 86400000).toISOString();
+  const end = end_time || new Date(Date.now() + 86400000 + 1800000).toISOString();
+  db.prepare("INSERT OR IGNORE INTO slots (id, interviewer_id, start_time, end_time, status) VALUES (?, ?, ?, ?, 'TERSEDIA')").run(slotId, interviewer.id, start, end);
+  res.status(201).json({ success: true, id: slotId });
+});
+
+router.get('/interviews', (req, res) => {
+  const rows = db.prepare(`
+    SELECT iv.*, s.start_time, s.end_time, i.name as interviewer_name,
+           a.name as candidate_name, a.email as candidate_email, j.title as job_title
+    FROM interviews iv
+    JOIN slots s ON iv.slot_id = s.id
+    JOIN interviewers i ON s.interviewer_id = i.id
+    JOIN applications a ON iv.application_id = a.id
+    JOIN jobs j ON a.job_id = j.id
+    ORDER BY s.start_time ASC
+  `).all();
+  res.json(rows);
+});
+
+// 11. Bank Talenta & Manajemen Staf (A13, A14)
+router.get('/talent-pool', (req, res) => {
+  const rows = db.prepare(`
+    SELECT a.*, j.title as job_title
+    FROM applications a JOIN jobs j ON a.job_id = j.id
+    WHERE a.status = 'TALENT_POOL'
+    ORDER BY a.score DESC, a.updated_at DESC
+  `).all();
+  res.json(rows);
+});
+
+router.get('/users', (req, res) => {
+  res.json(db.prepare('SELECT id, name, email, role, is_active, created_at FROM users ORDER BY created_at ASC').all());
 });
 
 module.exports = router;

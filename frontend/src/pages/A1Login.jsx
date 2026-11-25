@@ -1,30 +1,35 @@
 import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, AlertTriangle, ArrowRight } from 'lucide-react';
 import { LogoMark, StatusChip } from '../components/CockpitShell';
+import { loginStaff } from '../services/api';
 
 export default function A1Login({ onLogin }) {
-  const [email, setEmail] = useState('rina.hartono@inovasidigital.co.id');
+  const [email, setEmail] = useState('hr@recruitflow.id');
   const [password, setPassword] = useState('••••••••••••');
   const [showPw, setShowPw] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleKeyEvent = (e) => {
     if (e.getModifierState) setCapsLock(e.getModifierState('CapsLock'));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
       setError('Email atau kata sandi tidak sesuai. Periksa kembali kredensial Anda.');
       return;
     }
-    if (email.trim().toLowerCase() === 'salah@email.com') {
-      setError('Email atau kata sandi tidak sesuai. Periksa kembali kredensial Anda.');
+    setSubmitting(true);
+    setError('');
+    const res = await loginStaff(email, password, 'ADMIN');
+    setSubmitting(false);
+    if (!res.ok) {
+      setError(res.message || 'Email atau kata sandi tidak sesuai. Periksa kembali kredensial Anda.');
       return;
     }
-    setError('');
-    onLogin('ADMIN');
+    onLogin(res.user?.role || 'ADMIN');
   };
 
   return (

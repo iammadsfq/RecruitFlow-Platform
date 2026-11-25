@@ -197,7 +197,7 @@ export function A4Criteria({ job, onBack }) {
           <button
             type="button"
             disabled={!validWeight}
-            onClick={() => setSavedMsg('Kriteria disimpan & tugas Rescore dikirim ke RF_CV_Screening!')}
+            onClick={() => setSavedMsg('Kriteria disimpan & tugas Rescore dikirim ke antrean skrining robot!')}
             className="px-4 h-10 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] disabled:bg-slate-200 disabled:text-slate-400 text-[#172033] text-xs font-semibold inline-flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" strokeWidth={1.5} />
@@ -210,7 +210,7 @@ export function A4Criteria({ job, onBack }) {
       <div className="bg-[#FEF3C7] border border-amber-300 rounded-xl p-4 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-[#A16207] shrink-0 mt-0.5" strokeWidth={1.5} />
         <div className="text-xs text-amber-900">
-          <p className="font-bold text-[#A16207]">Perhatian (BR-12): Lowongan ini sudah memiliki {job?.applicants || 240} pelamar aktif</p>
+          <p className="font-bold text-[#A16207]">Perhatian: Lowongan ini sudah memiliki {job?.applicants || 0} pelamar aktif</p>
           <p className="mt-0.5">Mengubah syarat knock-out atau bobot kriteria akan menandai kandidat yang belum final untuk dihitung ulang (Rescore) oleh robot.</p>
         </div>
       </div>

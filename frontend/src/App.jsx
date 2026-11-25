@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ReactLenis } from 'lenis/react';
 import { AnimatePresence, motion } from 'motion/react';
 import CockpitShell from './components/CockpitShell';
@@ -11,6 +11,13 @@ import { A8Messages, A9Slots, A10Calendar } from './pages/A8A9A10Ops';
 import { A11Robot, A12Reports, A13TalentPool, A14Settings, I1MySchedule } from './pages/A11A12A13A14Admin';
 import Landing from './pages/Landing';
 import { INITIAL_JOBS, INITIAL_CANDIDATES, ROLE_PERMISSIONS } from './services/mockData';
+import {
+  fetchCockpitBootstrap,
+  decideCandidateApi,
+  bulkDecideApi,
+  updateJobStatusApi,
+  setAuthToken,
+} from './services/api';
 
 const BREADCRUMBS = {
   dashboard: ['Cockpit HR', 'Executive Dashboard'],
@@ -40,6 +47,22 @@ export default function App() {
   const [globalSearch, setGlobalSearch] = useState('');
   const [offlineMode, setOfflineMode] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    let active = true;
+    fetchCockpitBootstrap().then((res) => {
+      if (!active) return;
+      setOfflineMode(!res.isLive);
+      setJobs(res.jobs);
+      setSelectedJob(res.jobs[0]);
+      setCandidates(res.candidates);
+      if (res.candidates.length > 0) setSelectedCandidateId(res.candidates[0].id);
+    });
+    return () => {
+      active = false;
+    };
+  }, [loggedIn]);
 
   const handleLogin = (chosenRole) => {
     setRole(chosenRole);
@@ -72,12 +95,14 @@ export default function App() {
 
   const decideCandidate = (id, status) => {
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, status } : c)));
+    decideCandidateApi(id, status);
   };
 
   const bulkApprove = (ids) => {
     setCandidates((prev) =>
       prev.map((c) => (ids.includes(c.id) ? { ...c, status: 'DISETUJUI_UNDANG' } : c))
     );
+    bulkDecideApi('SESUAI', 'UNDANG');
   };
 
   const selectedCandidate = candidates.find((c) => c.id === selectedCandidateId) || candidates[0];
@@ -93,7 +118,10 @@ export default function App() {
           const perms = ROLE_PERMISSIONS[newRole];
           if (!perms.includes(page)) setPage(perms[0]);
         }}
-        onLogout={() => setLoggedIn(false)}
+        onLogout={() => {
+          setAuthToken('');
+          setLoggedIn(false);
+        }}
         allowedPages={allowedPages}
         waitingCount={waitingCount}
         breadcrumbs={BREADCRUMBS[page] || ['Cockpit HR']}
@@ -135,9 +163,10 @@ export default function App() {
                     ...prev,
                   ])
                 }
-                onCloseJob={(id) =>
-                  setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: 'CLOSED' } : j)))
-                }
+                onCloseJob={(id) => {
+                  setJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: 'CLOSED' } : j)));
+                  updateJobStatusApi(id, 'CLOSED');
+                }}
               />
             )}
 

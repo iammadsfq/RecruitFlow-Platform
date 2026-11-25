@@ -6,8 +6,6 @@ import { SakugaButton, SakugaCard } from '../components/SakugaVFX';
 
 export default function A2Dashboard({ waitingCount, onNavigate }) {
   const [period, setPeriod] = useState('30 Hari');
-  const [robotOffline, setRobotOffline] = useState(false);
-  const [emptyUrgent, setEmptyUrgent] = useState(false);
 
   const trendData =
     period === '7 Hari'
@@ -40,18 +38,8 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => setRobotOffline(!robotOffline)}
-            className={`px-3 py-2 rounded-lg text-xs font-semibold border ${
-              robotOffline ? 'bg-[#FEE2E2] border-red-200 text-[#B91C1C]' : 'bg-white border-slate-200 text-slate-600'
-            }`}
-          >
-            {robotOffline ? 'Pulihkan Robot' : 'Sim. Robot Offline'}
-          </button>
           <SakugaButton
             onClick={() => onNavigate('gate')}
-            impactText="GATE!"
             className="px-4 h-10 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] text-xs font-semibold inline-flex items-center gap-2"
           >
             Gerbang Persetujuan ({waitingCount})
@@ -103,7 +91,7 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
         <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4 shadow-sm">
           <div>
             <h3 className="font-display font-semibold text-base text-[#172033]">Komposisi Evaluasi Robot</h3>
-            <p className="text-xs text-slate-500">Distribusi hasil RF_CV_Screening bulan ini</p>
+            <p className="text-xs text-slate-500">Distribusi hasil skrining CV bulan ini</p>
           </div>
           <div className="flex items-center gap-5">
             <DonutChart
@@ -162,22 +150,8 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
         <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <h3 className="font-display font-semibold text-base text-[#172033]">Aksi Segera</h3>
-            <button
-              type="button"
-              onClick={() => setEmptyUrgent(!emptyUrgent)}
-              className="text-[11px] font-semibold text-slate-500 underline"
-            >
-              {emptyUrgent ? 'Tampilkan antrean' : 'Sim. Semua Beres'}
-            </button>
           </div>
-          {emptyUrgent ? (
-            <div className="bg-[#DCFCE7] rounded-xl p-5 text-center space-y-2">
-              <CheckCircle2 className="w-7 h-7 text-[#15803D] mx-auto" strokeWidth={1.5} />
-              <p className="text-sm font-semibold text-[#15803D]">Semua beres!</p>
-              <p className="text-xs text-green-800">Tidak ada tugas mendesak yang tertunda.</p>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
+          <div className="space-y-2.5">
               {[
                 ['14 kandidat di ambang batas (Perlu Dicek)', 'Skor 65–74 · Tinjau 1-per-1', 'Buka A7', 'gate'],
                 ['6 berkas CV gagal OCR (PERLU_DITINJAU)', 'PDF scan kabur atau terkunci', 'Periksa', 'candidates'],
@@ -200,39 +174,21 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
                 </div>
               ))}
             </div>
-          )}
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <h3 className="font-display font-semibold text-base text-[#172033]">Kesehatan Robot</h3>
-            {robotOffline ? (
-              <StatusChip variant="error" dot>
-                Offline 18 mnt
-              </StatusChip>
-            ) : (
-              <StatusChip variant="success" dot>
-                Live · 12d lalu
-              </StatusChip>
-            )}
+            <StatusChip variant="success" dot>
+              Live · 12d lalu
+            </StatusChip>
           </div>
-          {robotOffline ? (
-            <div className="bg-[#FEE2E2] rounded-xl p-4 space-y-2 text-xs text-[#B91C1C]">
-              <div className="flex items-center gap-2 font-bold">
-                <AlertTriangle className="w-4 h-4" strokeWidth={1.5} />
-                Robot Tidak Merespons
-              </div>
-              <p className="text-red-900">
-                Heartbeat terakhir diterima 18 menit lalu. Periksa UiPath Orchestrator.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
+          <div className="space-y-2">
               {[
-                ['RF_CV_Screening', 'Aktif · 99%', 'success'],
-                ['RF_Messaging', 'Aktif · 142', 'success'],
-                ['RF_Scheduling', 'Standby', 'neutral'],
-                ['RF_Reporting', '18.00 WIB', 'info'],
+                ['Skrining CV Otomatis', 'Aktif · 99%', 'success'],
+                ['Pengiriman Pesan', 'Aktif · 142', 'success'],
+                ['Penjadwalan Slot', 'Standby', 'neutral'],
+                ['Laporan Harian', '18.00 WIB', 'info'],
               ].map(([n, st, k]) => (
                 <div key={n} className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 text-xs">
                   <span className="inline-flex items-center gap-2 font-semibold text-[#172033]">
@@ -242,8 +198,7 @@ export default function A2Dashboard({ waitingCount, onNavigate }) {
                   <StatusChip variant={k}>{st}</StatusChip>
                 </div>
               ))}
-            </div>
-          )}
+          </div>
           <button
             type="button"
             onClick={() => onNavigate('robot')}

@@ -9,8 +9,8 @@ import { INITIAL_TALENT_POOL } from '../services/mockData';
 export function A11Robot() {
   const [running, setRunning] = useState(false);
   const [exceptions, setExceptions] = useState([
-    { id: 'ex1', title: 'RF_CV_Screening · APP-2026-R4T9', desc: 'OCR_LOW_CONFIDENCE (31%): PDF scan kabur · Dialihkan ke PERLU_DITINJAU', action: 'Tinjau' },
-    { id: 'ex2', title: 'RF_Messaging · MSG-8841 (SMTP Timeout)', desc: 'Gagal kirim email pengingat ke APP-L7V4 (Percobaan 2/3)', action: 'Retry' },
+    { id: 'ex1', title: 'Skrining CV · APP-2026-R4T9', desc: 'Akurasi baca OCR rendah (31%): PDF scan kabur · Dialihkan ke peninjauan manual', action: 'Tinjau' },
+    { id: 'ex2', title: 'Pengiriman Pesan · MSG-8841 (SMTP Timeout)', desc: 'Gagal kirim email pengingat ke APP-L7V4 (Percobaan 2/3)', action: 'Retry' },
   ]);
 
   return (
@@ -22,7 +22,6 @@ export function A11Robot() {
         </div>
         <SakugaButton
           disabled={running}
-          impactText="RUN RPA!"
           onClick={() => {
             setRunning(true);
             setTimeout(() => setRunning(false), 1500);
@@ -30,16 +29,16 @@ export function A11Robot() {
           className="px-4 h-10 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] disabled:bg-slate-200 text-[#172033] text-xs font-semibold inline-flex items-center gap-2"
         >
           <Bot className="w-4 h-4" strokeWidth={1.5} />
-          {running ? 'Permintaan masuk antrean...' : 'Jalankan RF_CV_Screening Sekarang'}
+          {running ? 'Permintaan masuk antrean...' : 'Jalankan Skrining CV Sekarang'}
         </SakugaButton>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          ['RF_CV_Screening', 'Ekstraksi PDF & Skoring', running ? 'Berjalan' : 'Aktif', 'success', '1.248 CV · Rata-rata 4,2 dtk/CV'],
-          ['RF_Messaging', 'Email & WhatsApp', 'Antre: 3', 'success', '612 pesan · 99,5% sukses · Patuh BR-01'],
-          ['RF_Scheduling', 'Alokasi & Pelepasan Slot', 'Standby', 'neutral', '42 slot dikunci · 5 dilepas otomatis'],
-          ['RF_Reporting', 'Agregasi Metrik Harian', '18.00 WIB', 'info', 'Laporan terakhir: Kemarin 18.00 WIB'],
+          ['Skrining CV', 'Ekstraksi PDF & Skoring', running ? 'Berjalan' : 'Aktif', 'success', '1.248 CV · Rata-rata 4,2 dtk/CV'],
+          ['Pengiriman Pesan', 'Email & WhatsApp', 'Antre: 3', 'success', '612 pesan · 99,5% sukses · Terotorisasi HR'],
+          ['Penjadwalan Slot', 'Alokasi & Pelepasan Slot', 'Standby', 'neutral', '42 slot dikunci · 5 dilepas otomatis'],
+          ['Laporan Harian', 'Agregasi Metrik Harian', '18.00 WIB', 'info', 'Laporan terakhir: Kemarin 18.00 WIB'],
         ].map(([name, desc, st, k, stat], idx) => (
           <SakugaCard key={name} delay={idx * 0.05} className="bg-white rounded-xl p-4 space-y-2">
             <div className="flex items-center justify-between">
@@ -106,10 +105,10 @@ export function A11Robot() {
             </span>
             <StatusChip variant="navy">Auto-scroll Aktif</StatusChip>
           </div>
-          <p>[13:45:02 INFO] RF_CV_Screening · Memulai ekstraksi dokumen untuk ref=APP-2026-X9A7 (PII masked)</p>
-          <p>[13:45:05 INFO] RF_CV_Screening · Skor dihitung: total=86, kelompok=SESUAI, confidence=0.94</p>
-          <p className="text-amber-300">[13:45:12 WARN] RF_CV_Screening · ref=APP-2026-R4T9 teks kosong/scan kabur -&gt; PERLU_DITINJAU</p>
-          <p>[13:46:01 INFO] RF_Messaging · Memeriksa antrean pesan approval=APPROVED (BR-01 tervalidasi)</p>
+          <p>[13:45:02 INFO] Skrining CV · Memulai ekstraksi dokumen untuk ref=APP-2026-X9A7 (PII masked)</p>
+          <p>[13:45:05 INFO] Skrining CV · Skor dihitung: total=86, kelompok=SESUAI, confidence=0.94</p>
+          <p className="text-amber-300">[13:45:12 WARN] Skrining CV · ref=APP-2026-R4T9 teks kosong/scan kabur -&gt; Perlu Ditinjau</p>
+          <p>[13:46:01 INFO] Pengiriman Pesan · Memeriksa antrean pesan terotorisasi HR</p>
         </div>
         <div className="hairline-theme-navy rounded-xl bg-[#172033] p-1">
           <Terminal play intensity={0.75} theme="dark" label="Terminal Live Log Robot" className="w-full" />
@@ -194,6 +193,7 @@ export function A12Reports() {
 export function A13TalentPool() {
   const [pool, setPool] = useState(INITIAL_TALENT_POOL);
   const [tagFilter, setTagFilter] = useState('Semua');
+  const [inviteNotice, setInviteNotice] = useState('');
 
   const filtered = pool.filter(
     (p) => tagFilter === 'Semua' || p.tags.some((t) => t.toLowerCase().includes(tagFilter.toLowerCase()))
@@ -256,7 +256,7 @@ export function A13TalentPool() {
               </button>
               <button
                 type="button"
-                onClick={() => alert(`Undangan melamar dikirim ke ${tp.name}`)}
+                onClick={() => setInviteNotice(`Undangan melamar dikirim ke ${tp.name}`)}
                 className="px-3.5 h-9 rounded-lg bg-[#FFCC00] text-[#172033] text-xs font-semibold"
               >
                 Undang ke Lowongan Baru
@@ -265,6 +265,12 @@ export function A13TalentPool() {
           </div>
         ))}
       </div>
+      {inviteNotice && (
+        <div className="bg-[#DCFCE7] border border-green-200 rounded-xl p-3 text-xs font-semibold text-[#15803D] flex items-center justify-between">
+          <span>{inviteNotice}</span>
+          <button type="button" onClick={() => setInviteNotice('')} className="underline">Tutup</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -387,11 +393,11 @@ export function I1MySchedule({ onLogout }) {
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => alert('Membuka CV Nadia Putri (Read-Only)')}
+            onClick={() => setSavedNote(true)}
             className="h-10 rounded-xl border border-slate-300 bg-white text-xs font-semibold inline-flex items-center justify-center gap-1.5"
           >
             <FileText className="w-4 h-4" strokeWidth={1.5} />
-            Buka CV
+            Lihat Ringkasan CV
           </button>
           <button
             type="button"

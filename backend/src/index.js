@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Pendaftaran Rute
+app.use('/auth', require('./routes/auth.routes'));
 app.use('/robot', require('./routes/robot.routes'));
 app.use('/public', require('./routes/public.routes'));
 app.use('/hr', require('./routes/hr.routes'));

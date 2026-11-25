@@ -1,36 +1,38 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 
-const SPARK_ANGLES = [0, 35, 72, 115, 150, 190, 228, 265, 305, 338];
-
 /**
- * SakugaButton — Anime-inspired VFX button (squash-and-stretch spring physics,
- * radial speed/impact lines, expanding shockwave ring, and optional impact callout).
+ * SakugaButton — Tactile spring physics (squash-and-stretch),
+ * crisp yellow/navy spark particles, and shockwave ring on click.
  */
 export function SakugaButton({
   children,
   onClick,
-  className = '',
   disabled = false,
   type = 'button',
-  sparkColor = '#FFCC00',
-  impactText = '',
-  ...rest
+  className = '',
+  popText = '',
+  variant = 'primary',
 }) {
   const [bursts, setBursts] = useState([]);
 
-  const handleClick = (e) => {
+  const triggerBurst = (e) => {
     if (disabled) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX ? e.clientX - rect.left : rect.width / 2;
     const y = e.clientY ? e.clientY - rect.top : rect.height / 2;
-    const id = `${Date.now()}_${Math.random()}`;
-
-    setBursts((prev) => [...prev, { id, x, y }]);
+    const id = Date.now() + Math.random();
+    const sparks = Array.from({ length: 8 }, (_, idx) => ({
+      angle: `${idx * 45 + (Math.random() * 14 - 7)}deg`,
+      dist: `${22 + Math.random() * 16}px`,
+      w: idx % 2 === 0 ? 3 : 2,
+      h: idx % 2 === 0 ? 11 : 7,
+      color: variant === 'navy' ? '#FFCC00' : idx % 2 === 0 ? '#FFCC00' : '#172033',
+    }));
+    setBursts((prev) => [...prev, { id, x, y, sparks }]);
     setTimeout(() => {
       setBursts((prev) => prev.filter((b) => b.id !== id));
     }, 650);
-
     onClick?.(e);
   };
 
@@ -38,50 +40,48 @@ export function SakugaButton({
     <motion.button
       type={type}
       disabled={disabled}
-      onClick={handleClick}
+      onClick={triggerBurst}
       whileHover={disabled ? undefined : { scale: 1.03, y: -1 }}
-      whileTap={disabled ? undefined : { scaleX: 1.07, scaleY: 0.91 }}
-      transition={{ type: 'spring', stiffness: 520, damping: 20 }}
+      whileTap={disabled ? undefined : { scaleX: 1.06, scaleY: 0.92 }}
+      transition={{ type: 'spring', stiffness: 520, damping: 22 }}
       className={`relative overflow-visible select-none ${className}`}
-      {...rest}
     >
       {children}
-
-      {/* Sakuga VFX Burst Layer */}
       {bursts.map((b) => (
         <span
           key={b.id}
-          aria-hidden="true"
           className="pointer-events-none absolute inset-0 overflow-visible z-30"
+          aria-hidden="true"
         >
-          {/* Shockwave impact ring */}
           <span
             className="sakuga-ring absolute w-8 h-8 rounded-full border-2"
-            style={{ left: b.x, top: b.y, borderColor: sparkColor }}
+            style={{
+              left: b.x,
+              top: b.y,
+              borderColor: variant === 'navy' ? '#FFCC00' : '#172033',
+            }}
           />
-          {/* Radial anime impact lines */}
-          {SPARK_ANGLES.map((angle, i) => (
+          {b.sparks.map((sp, idx) => (
             <span
-              key={angle}
+              key={idx}
               className="sakuga-spark absolute rounded-full"
               style={{
                 left: b.x,
                 top: b.y,
-                width: i % 2 === 0 ? '3px' : '2px',
-                height: i % 2 === 0 ? '14px' : '9px',
-                backgroundColor: i % 3 === 0 ? '#FFFFFF' : sparkColor,
-                '--angle': `${angle}deg`,
-                '--dist': i % 2 === 0 ? '38px' : '26px',
+                width: sp.w,
+                height: sp.h,
+                backgroundColor: sp.color,
+                '--angle': sp.angle,
+                '--dist': sp.dist,
               }}
             />
           ))}
-          {/* Optional manga/anime impact pop text */}
-          {impactText && (
+          {popText && (
             <span
-              className="sakuga-pop-tag absolute px-2 py-0.5 rounded-md bg-[#172033] text-[#FFCC00] font-display font-extrabold text-[10px] tracking-wider uppercase shadow-md whitespace-nowrap"
-              style={{ left: b.x, top: b.y }}
+              className="sakuga-pop-tag absolute font-display font-extrabold text-[11px] px-2 py-0.5 rounded bg-[#172033] text-[#FFCC00] shadow-md whitespace-nowrap"
+              style={{ left: b.x, top: b.y - 10 }}
             >
-              {impactText}
+              {popText}
             </span>
           )}
         </span>

@@ -31,7 +31,7 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
       prevStatus,
       actionText:
         status === 'DISETUJUI_UNDANG'
-          ? 'disetujui untuk diundang wawancara. Pesan masuk antrean RF_Messaging.'
+          ? 'disetujui untuk diundang wawancara. Pesan masuk antrean pengiriman.'
           : status === 'MENUNGGU_USER'
           ? 'diteruskan ke Hiring User.'
           : 'ditandai tidak dilanjutkan.',
@@ -46,7 +46,7 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
             Gerbang Persetujuan (Approval Gate)
           </h1>
           <p className="text-sm text-slate-500">
-            BR-01: Tidak ada kandidat yang dihubungi robot sebelum disetujui di halaman ini
+            Tidak ada kandidat yang dihubungi robot sebelum disetujui di halaman ini
           </p>
         </div>
 
@@ -112,12 +112,12 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
         <div className="bg-[#FFFBE6] border border-[#FFCC00] rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1 min-w-[260px]">
             <div className="hairline-theme-amber w-20 shrink-0 rounded-lg overflow-hidden">
-              <Padlock play intensity={0.8} theme="light" label="Kunci Guardrail BR-01" className="w-full" />
+              <Padlock play intensity={0.8} theme="light" label="Kunci Pengaman Persetujuan" className="w-full" />
             </div>
             <div className="text-xs">
               <p className="font-bold text-[#172033] inline-flex items-center gap-1.5">
                 <Shield className="w-4 h-4 text-[#172033]" strokeWidth={1.75} />
-                Aturan PRD · Tab "Perlu Dicek" (Skor Ambang 65–74)
+                Verifikasi Manual · Tab "Perlu Dicek" (Skor Ambang 65–74)
               </p>
               <p className="text-slate-600 mt-1">
                 Persetujuan massal (Bulk Approve) sengaja dikunci pada tab ini agar peninjau memeriksa alasan selisih tiap kandidat satu per satu.
@@ -146,7 +146,6 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
           </div>
           <SakugaButton
             onClick={() => setBulkModalOpen(true)}
-            impactText="BULK!"
             className="px-4 py-2 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] text-xs font-semibold inline-flex items-center gap-1.5"
           >
             <Check className="w-4 h-4" strokeWidth={2} />
@@ -218,7 +217,6 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
                     <SakugaButton
                       disabled={activeTab === 'PERLU_DITINJAU'}
                       onClick={() => handleAction(c, 'DISETUJUI_UNDANG')}
-                      impactText="APPROVED!"
                       className="px-3.5 h-9 rounded-lg bg-[#FFCC00] hover:bg-[#F2BE00] disabled:bg-slate-200 disabled:text-slate-400 text-[#172033] text-xs font-semibold inline-flex items-center gap-1"
                     >
                       <Check className="w-3.5 h-3.5" strokeWidth={2} />
@@ -238,7 +236,7 @@ export default function A7Gate({ candidates, onDecide, onBulkApprove, onPreviewC
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
             <h3 className="font-display font-bold text-lg text-[#172033]">Konfirmasi Persetujuan Massal</h3>
             <p className="text-sm text-slate-600">
-              Setelah dikonfirmasi, robot RF_Messaging akan mengirimkan undangan wawancara WhatsApp & email ke{' '}
+              Setelah dikonfirmasi, robot akan mengirimkan undangan wawancara WhatsApp &amp; email ke{' '}
               <span className="font-bold text-[#172033]">{list.length} kandidat</span> kelompok "Sesuai Kriteria".
             </p>
             <div className="bg-[#DCFCE7] rounded-xl p-3 text-xs font-semibold text-[#15803D]">

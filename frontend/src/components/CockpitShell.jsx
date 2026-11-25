@@ -20,16 +20,24 @@ export function LogoMark({ size = 36 }) {
   return (
     <div
       style={{ width: size, height: size }}
-      className="rounded-xl bg-[#FFCC00] flex items-center justify-center shrink-0"
+      className="rounded-xl bg-[#172033] border border-white/10 flex items-center justify-center shrink-0 shadow-sm"
     >
-      <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none">
+      <svg width={size * 0.72} height={size * 0.72} viewBox="0 0 64 64" fill="none" aria-hidden="true">
         <path
-          d="M7 18V6H13.5C15.7 6 17.5 7.6 17.5 9.8C17.5 12 15.7 13.5 13.5 13.5H7M12.5 13.5L17.5 18"
-          stroke="#172033"
-          strokeWidth="2.2"
+          d="M16 48V16H32.5C38.8 16 43.5 20.2 43.5 26.2C43.5 32.2 38.8 36.2 32.5 36.2H23"
+          stroke="#FFFFFF"
+          strokeWidth="5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+        <path
+          d="M31 36.2L38 45.5L50 28"
+          stroke="#FFCC00"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="16" cy="16" r="4" fill="#FFCC00" />
       </svg>
     </div>
   );
@@ -187,7 +195,7 @@ export default function CockpitShell({
 
           <div className="flex-1" />
 
-          {/* Role & Offline Quick Switcher for testing edge cases */}
+          {/* Role Switcher */}
           <div className="flex items-center gap-2 bg-slate-100 px-2.5 py-1 rounded-lg">
             <span className="text-[11px] font-medium text-slate-500">Peran:</span>
             <select
@@ -201,19 +209,6 @@ export default function CockpitShell({
               <option value="INTERVIEWER">INTERVIEWER</option>
             </select>
           </div>
-
-          <button
-            type="button"
-            onClick={onToggleOffline}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1.5 ${
-              offlineMode
-                ? 'bg-[#FEE2E2] border-red-200 text-[#B91C1C]'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <WifiOff className="w-3.5 h-3.5" strokeWidth={1.5} />
-            {offlineMode ? 'Offline (503)' : 'Sim. Offline'}
-          </button>
 
           <div className="relative w-64">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" strokeWidth={1.5} />

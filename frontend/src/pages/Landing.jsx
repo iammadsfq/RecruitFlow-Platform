@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Hub, Sieve, Vault, Slow, Terminal } from '@lucasmarkes/hairline/react';
-import { ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
+import { Hub, Sieve, Vault, Slow, Plot } from '@lucasmarkes/hairline/react';
+import { ArrowRight, ChevronDown } from 'lucide-react';
 import { LogoMark } from '../components/CockpitShell';
 import { SakugaButton } from '../components/SakugaVFX';
 
@@ -13,65 +13,55 @@ const PIPELINE_STEPS = [
   {
     step: '01',
     Figure: Sieve,
-    title: 'RF_CV_Screening',
-    tag: 'Ekstraksi & Skoring Otomatis',
-    desc: 'Robot UiPath membaca PDF CV, menyaring sinonim keahlian, dan mendeteksi selisih formulir vs CV dalam 4,2 detik.',
+    title: 'Ekstraksi & Skoring CV',
+    tag: 'Tahap 01',
+    desc: 'Membaca PDF CV, mencocokkan sinonim keahlian, dan menandai selisih isian formulir terhadap dokumen asli.',
   },
   {
     step: '02',
     Figure: Vault,
-    title: 'Approval Gate (BR-01)',
-    tag: 'Human-in-the-Lead',
-    desc: 'Keputusan tetap 100% di tangan HR & Hiring User. Tab "Perlu Dicek" mengunci persetujuan massal tanpa verifikasi manusia.',
+    title: 'Gerbang Persetujuan HR',
+    tag: 'Tahap 02',
+    desc: 'Keputusan tetap di tangan HR dan Hiring User. Kandidat dengan skor meragukan dikunci dari persetujuan massal.',
   },
   {
     step: '03',
     Figure: Slow,
-    title: 'RF_Scheduling & Messaging',
-    tag: 'Slot Anti-Bentrok',
-    desc: 'Setelah disetujui, robot mengunci slot wawancara tanpa bentrok dan mengirim tautan konfirmasi 1-klik ke kandidat.',
+    title: 'Penjadwalan & Notifikasi',
+    tag: 'Tahap 03',
+    desc: 'Mengunci slot wawancara anti-bentrok dan mengirimkan tautan konfirmasi satu klik ke kandidat yang disetujui.',
   },
   {
     step: '04',
-    Figure: Terminal,
-    title: 'RF_Reporting & Live Telemetry',
-    tag: 'Audit & Privasi PII',
-    desc: 'Seluruh aktivitas robot terpantau real-time dengan penyamaran PII dan laporan efisiensi harian otomatis.',
+    Figure: Plot,
+    title: 'Pelaporan & Telemetri',
+    tag: 'Tahap 04',
+    desc: 'Merekam log aktivitas robot tanpa data pribadi (PII) serta menyusun rekap efisiensi rekrutmen harian.',
   },
 ];
 
 export default function Landing({ onProceed }) {
   const rootRef = useRef(null);
-  const [hubReadout, setHubReadout] = useState('Arahkan kursor ke figur Hairline');
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from('.gsap-hero-stagger', {
-        y: 28,
+        y: 16,
         opacity: 0,
-        duration: 0.75,
-        stagger: 0.1,
-        ease: 'power3.out',
-      });
-
-      gsap.from('.gsap-stat-card', {
-        y: 24,
-        opacity: 0,
-        duration: 0.65,
-        stagger: 0.1,
-        delay: 0.35,
+        duration: 0.55,
+        stagger: 0.08,
         ease: 'power2.out',
       });
 
-      gsap.from('.gsap-pipeline-card', {
-        y: 36,
+      gsap.from('.gsap-pipeline-row', {
+        y: 18,
         opacity: 0,
-        duration: 0.65,
-        stagger: 0.12,
-        ease: 'power3.out',
+        duration: 0.5,
+        stagger: 0.08,
+        ease: 'power2.out',
         scrollTrigger: {
           trigger: '.gsap-pipeline-section',
-          start: 'top 82%',
+          start: 'top 85%',
           once: true,
         },
       });
@@ -81,27 +71,26 @@ export default function Landing({ onProceed }) {
   }, []);
 
   return (
-    <div ref={rootRef} className="min-h-screen bg-[#0F172A] text-white hairline-grid-dark selection:bg-[#FFCC00] selection:text-[#172033]">
-      {/* Top Hairline Navigation */}
-      <header className="sticky top-0 z-30 backdrop-blur-md bg-[#0F172A]/80 border-b border-white/10">
+    <div ref={rootRef} className="min-h-screen bg-[#0F172A] text-white selection:bg-[#FFCC00] selection:text-[#172033]">
+      {/* Compact Single-Row Top Bar */}
+      <header className="sticky top-0 z-30 backdrop-blur-md bg-[#0F172A]/90 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <LogoMark size={36} />
             <div>
               <p className="font-display font-bold text-base leading-tight">RecruitFlow</p>
-              <p className="text-[11px] text-slate-400">UiPath RPA × Human Approval Gate</p>
+              <p className="text-[11px] text-slate-400">HR Cockpit &amp; UiPath Automation</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 hairline-dark text-xs text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              4 Robot UiPath Siap
+          <div className="flex items-center gap-5">
+            <span className="hidden sm:inline-flex items-center gap-2 text-xs text-slate-300 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              4 Worker UiPath Terhubung
             </span>
             <SakugaButton
               onClick={onProceed}
-              impactText="GO!"
-              className="px-4 h-9 rounded-lg bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] font-semibold text-xs inline-flex items-center gap-1.5"
+              className="px-4 h-9 rounded-lg bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] font-semibold text-xs inline-flex items-center gap-1.5 transition-colors"
             >
               Buka Cockpit HR
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />
@@ -110,29 +99,27 @@ export default function Landing({ onProceed }) {
         </div>
       </header>
 
-      {/* Hero Section with Interactive @lucasmarkes/hairline Hub Figure */}
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-16 lg:pt-24 lg:pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      {/* Hero Section */}
+      <section className="max-w-6xl mx-auto px-6 pt-16 pb-14 lg:pt-24 lg:pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6">
-            <div className="gsap-hero-stagger inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FFCC00]/10 text-[#FFCC00] hairline-dark text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" strokeWidth={1.75} />
-              Automasi Rekrutmen End-to-End · Human-in-the-Lead
-            </div>
+            <p className="gsap-hero-stagger border-l-2 border-[#FFCC00] pl-3 text-xs font-semibold uppercase tracking-[0.14em] text-[#FFCC00]">
+              UiPath RPA · Human-in-the-Lead Governance
+            </p>
 
-            <h1 className="gsap-hero-stagger font-display font-extrabold text-4xl sm:text-5xl lg:text-[54px] leading-[1.08] tracking-tight">
-              Skrining 100 CV dalam hitungan menit.{' '}
-              <span className="text-[#FFCC00]">Keputusan tetap di tangan HR.</span>
+            <h1 className="gsap-hero-stagger font-display font-extrabold text-4xl sm:text-5xl lg:text-[52px] leading-[1.08] tracking-tight">
+              Skrining CV otomatis.{' '}
+              <span className="text-[#FFCC00]">Keputusan akhir tetap di HR.</span>
             </h1>
 
-            <p className="gsap-hero-stagger text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl">
-              RecruitFlow menggabungkan kecepatan robot <strong className="text-white">UiPath RPA</strong> untuk ekstraksi CV, penilaian kriteria, dan penjadwalan otomatis dengan <strong className="text-white">Gerbang Persetujuan (BR-01)</strong> yang transparan dan bebas bias.
+            <p className="gsap-hero-stagger text-base text-slate-300 leading-relaxed max-w-xl">
+              RecruitFlow memisahkan pekerjaan repetitif—ekstraksi PDF, pencocokan kriteria, dan penjadwalan slot—ke robot <strong className="text-white">UiPath RPA</strong>, sementara seluruh persetujuan kandidat dikendalikan melalui Gerbang Persetujuan HR.
             </p>
 
             <div className="gsap-hero-stagger flex flex-wrap items-center gap-3 pt-2">
               <SakugaButton
                 onClick={onProceed}
-                impactText="LAUNCH!"
-                className="px-6 h-12 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] font-bold text-sm inline-flex items-center gap-2 shadow-lg shadow-[#FFCC00]/15"
+                className="px-6 h-11 rounded-lg bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] font-bold text-sm inline-flex items-center gap-2 transition-colors"
               >
                 Masuk ke Cockpit HR
                 <ArrowRight className="w-4 h-4" strokeWidth={2.2} />
@@ -141,97 +128,65 @@ export default function Landing({ onProceed }) {
               <motion.a
                 href="#arsitektur"
                 whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.97 }}
-                className="px-5 h-12 rounded-xl bg-white/5 hover:bg-white/10 hairline-dark text-white font-semibold text-sm inline-flex items-center gap-2 transition"
+                className="px-5 h-11 rounded-lg border border-white/15 hover:border-white/30 text-slate-200 font-semibold text-sm inline-flex items-center gap-2 transition-colors"
               >
-                Lihat Alur Robot
+                Alur Kerja Sistem
                 <ChevronDown className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
               </motion.a>
             </div>
           </div>
 
-          {/* Interactive Hairline Isometric Hub */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="lg:col-span-5 rounded-2xl bg-[#172033]/85 hairline-dark p-5 space-y-3"
-          >
-            <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-              <span className="text-[#FFCC00] font-semibold">ORCHESTRATOR HUB · INTERAKTIF</span>
-              <span className="px-2 py-0.5 rounded bg-white/5 text-slate-300">{hubReadout || 'standby'}</span>
-            </div>
-            <div className="hairline-theme-navy rounded-xl overflow-hidden bg-[#172033] p-2">
+          <div className="lg:col-span-5 rounded-xl border border-white/10 bg-[#172033] p-4">
+            <div className="hairline-theme-navy rounded-lg overflow-hidden bg-[#172033]">
               <Hub
                 play
-                intensity={0.85}
+                intensity={0.8}
                 theme="dark"
                 label="Orkestrasi Hub RecruitFlow UiPath"
-                onRead={(txt) => setHubReadout(txt)}
                 className="w-full"
               />
             </div>
-            <p className="text-[11px] text-slate-400 text-center">
-              Gerakkan kursor di atas figur isometrik untuk melihat respons node orkestrasi
-            </p>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Hairline Metric Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-14">
+        {/* Clean Architectural Key Metrics Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 border-y border-white/10 divide-y sm:divide-y-0 sm:divide-x divide-white/10 mt-16">
           {[
-            ['86,4%', 'Penghematan Waktu Skrining', 'Dari 3,5 menit manual menjadi 4,2 detik per CV'],
-            ['100%', 'Kepatuhan Approval Gate (BR-01)', 'Zero pesan terkirim tanpa otorisasi HR / User'],
-            ['4 Proses', 'Orkestrasi Robot UiPath', 'Screening, Messaging, Scheduling, & Reporting'],
+            ['86,4%', 'Efisiensi Waktu Skrining', 'Dari ~3,5 menit manual menjadi beberapa detik per CV'],
+            ['100%', 'Otorisasi Gerbang Persetujuan', 'Tidak ada undangan terkirim tanpa persetujuan HR'],
+            ['4 Proses', 'Worker UiPath Terpadu', 'Screening, Messaging, Scheduling, dan Reporting'],
           ].map(([big, title, sub]) => (
-            <motion.div
-              key={title}
-              whileHover={{ y: -3 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 24 }}
-              className="gsap-stat-card rounded-2xl bg-[#172033]/90 p-5 hairline-dark space-y-1.5"
-            >
+            <div key={title} className="py-6 sm:px-6 first:sm:pl-0 last:sm:pr-0 space-y-1">
               <p className="font-display font-extrabold text-3xl text-[#FFCC00] tabular-nums">{big}</p>
               <p className="font-display font-semibold text-sm text-white">{title}</p>
               <p className="text-xs text-slate-400 leading-relaxed">{sub}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
 
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="hairline-divider-dark" />
-      </div>
-
-      {/* Scroll-triggered 4-Stage Pipeline with @lucasmarkes/hairline Figures */}
-      <section id="arsitektur" className="gsap-pipeline-section max-w-6xl mx-auto px-6 py-20 space-y-10">
+      {/* 4-Stage Pipeline — Editorial Grid with Hairline Dividers */}
+      <section id="arsitektur" className="gsap-pipeline-section max-w-6xl mx-auto px-6 pb-20 space-y-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#FFCC00]">Arsitektur Automasi</p>
-            <h2 className="font-display font-bold text-3xl sm:text-4xl">
-              4 Tahap Kolaborasi Robot & Manusia
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#FFCC00]">Arsitektur Sistem</p>
+            <h2 className="font-display font-bold text-2xl sm:text-3xl">
+              Empat Tahap Kolaborasi Robot &amp; HR
             </h2>
           </div>
-          <p className="text-sm text-slate-400 max-w-md">
-            Setiap tahap dilengkapi figur isometrik interaktif—arahkan kursor ke kartu untuk mengeksplorasi alur kerja.
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border border-white/10 rounded-xl divide-y md:divide-y-0 md:divide-x divide-white/10 bg-[#172033]/60 overflow-hidden">
           {PIPELINE_STEPS.map((item) => {
             const Figure = item.Figure;
             return (
-              <motion.div
-                key={item.step}
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                className="gsap-pipeline-card rounded-2xl bg-[#172033]/90 p-5 hairline-dark flex flex-col justify-between gap-4"
-              >
+              <div key={item.step} className="gsap-pipeline-row p-5 flex flex-col justify-between gap-4">
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-[#FFCC00]">{item.tag}</span>
-                    <span className="font-mono text-xs font-bold text-slate-500">{item.step}</span>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-semibold text-[#FFCC00]">{item.tag}</span>
+                    <span className="font-mono text-slate-500">{item.step}</span>
                   </div>
-                  <div className="hairline-theme-navy rounded-xl bg-[#172033] overflow-hidden">
+                  <div className="hairline-theme-navy rounded-lg bg-[#172033] overflow-hidden border border-white/5">
                     <Figure
                       play
                       intensity={0.75}
@@ -243,26 +198,9 @@ export default function Landing({ onProceed }) {
                   <h3 className="font-display font-bold text-base text-white">{item.title}</h3>
                   <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
-        </div>
-
-        <div className="rounded-2xl bg-gradient-to-r from-[#172033] via-[#1E293B] to-[#172033] p-8 hairline-dark flex flex-wrap items-center justify-between gap-6">
-          <div className="space-y-1.5">
-            <h3 className="font-display font-bold text-xl">Siap mencoba simulasi Cockpit HR?</h3>
-            <p className="text-sm text-slate-300">
-              Uji alur persetujuan kandidat, monitoring robot UiPath, hingga pengaturan bobot skoring secara interaktif.
-            </p>
-          </div>
-          <SakugaButton
-            onClick={onProceed}
-            impactText="READY!"
-            className="px-6 h-11 rounded-xl bg-[#FFCC00] hover:bg-[#F2BE00] text-[#172033] font-bold text-sm inline-flex items-center gap-2"
-          >
-            Mulai Sekarang
-            <ArrowRight className="w-4 h-4" strokeWidth={2} />
-          </SakugaButton>
         </div>
       </section>
     </div>
